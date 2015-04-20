@@ -1,0 +1,251 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>User locations test</title>
+    <style >
+      body {
+        margin: 0;
+        padding: 10px 20px 20px;
+        font-family: Arial;
+        font-size: 16px;
+      }
+      #map-container {
+        padding: 6px;
+        border-width: 1px;
+        border-style: solid;
+        border-color: #ccc #ccc #999 #ccc;
+        -webkit-box-shadow: rgba(64, 64, 64, 0.5) 0 2px 5px;
+        -moz-box-shadow: rgba(64, 64, 64, 0.5) 0 2px 5px;
+        box-shadow: rgba(64, 64, 64, 0.1) 0 2px 5px;
+        width: 800px;
+      }
+      #map {
+        width: 800px;
+        height: 600px;
+      }
+    </style>
+
+    <script src="https://maps.googleapis.com/maps/api/js"></script>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script>
+      var script = '<script type="text/javascript" src="../js-marker-clusterer/src/markerclusterer';
+      if (document.location.search.indexOf('compiled') !== -1) {
+        script += '_compiled';
+      }
+      script += '.js"><' + '/script>';
+      document.write(script);
+    </script>
+
+    <script>
+
+    var markerClusterer = null;
+    var map = null;
+    var markers = [];
+    var points = [];
+    var infowindow = new google.maps.InfoWindow({
+      content: ""
+    });
+
+    function refreshMap() {
+
+        clearMarkers();
+        clearPoints();
+       
+        if (markerClusterer) {
+            markerClusterer.clearMarkers();
+        }
+
+        refreshPoints();
+
+        var user = document.getElementById('user').value;
+        var day = document.getElementById('day').value;
+
+        d3.json( user + "." + day + ".items.json", function(data) {
+                
+            drawItems(map, data);
+        });            
+
+        d3.json( user + "." + day + ".clusters.json", function(data) {
+            
+            drawClusters(map, data);
+        });        
+
+    }
+
+    function refreshPoints() {
+
+        var user = document.getElementById('user').value;
+        var day = document.getElementById('day').value;
+        var isChecked = document.getElementById('show-points').checked;
+        console.log(isChecked);
+
+        if( isChecked  === true ) {
+
+            d3.json( user + "." + day + ".json", function(data) {
+                
+                drawPositions(map, data);
+            });
+
+        } else {
+            clearPoints();
+        }
+    }
+
+
+
+    function drawItems(map, data) {
+
+        
+        for (var i = 0; i < data.length; i++) {
+            var dataPhoto = data[i];
+            var latLng = new google.maps.LatLng(dataPhoto.latitude,
+                  dataPhoto.longitude);
+            var marker = new google.maps.Marker({
+                    position: latLng,
+                    map: map,
+                    title: dataPhoto.title,
+                    icon: "olx.png"
+            });
+
+            markers.push(marker);
+
+            google.maps.event.addListener(marker, 'click', function(res) {
+
+                console.log('res', res);
+                console.log('marker', marker);
+                infowindow.setContent(this.title);
+                infowindow.open(map, this);
+
+            });
+
+        }
+
+    }
+
+    function drawClusters(map, data) {
+
+        for (var i = 0; i < data.length; i++) {
+            var dataPhoto = data[i];
+            var latLng = new google.maps.LatLng(dataPhoto.latitude,
+                  dataPhoto.longitude);
+            var marker = new google.maps.Marker({
+                    position: latLng,
+                    map: map,
+                    icon: 'cluster.png'
+
+            });
+            markers.push(marker);
+        }
+    }    
+
+    function drawPositions(map, data) {
+
+        for (var i = 0; i < data.length; i++) {
+            var dataPhoto = data[i];
+            var latLng = new google.maps.LatLng(dataPhoto.lat,
+                  dataPhoto.lng);
+            var marker = new google.maps.Marker({
+                    position: latLng,
+                    map: map,
+                    icon: 'circle.png'
+
+            });
+            points.push(marker);
+        }
+    }    
+
+    function clearMarkers() {
+        for (var i = 0; i < markers.length; i++) {
+            markers[i].setMap(null);
+        }
+
+        markers = [];
+    }
+
+    function clearPoints() {
+        for (var i = 0; i < points.length; i++) {
+            points[i].setMap(null);
+        }
+
+        points = [];
+    }    
+
+
+    function drawMap(map, data) {
+
+        var markers = [];
+        for (var i = 0; i < data.length; i++) {
+            var dataPhoto = data[i];
+            var latLng = new google.maps.LatLng(dataPhoto.lat,
+                  dataPhoto.lng);
+            var marker = new google.maps.Marker({
+                    position: latLng
+            });
+            markers.push(marker);
+        }
+        markerClusterer = new MarkerClusterer(map, markers);
+        console.log(markerClusterer.clusters_);
+    }
+
+    function clearClusters(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        markerClusterer.clearMarkers();
+    }    
+
+    function initialize() {
+        var center = new google.maps.LatLng(-34.5853293,-58.4385033);
+
+        map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 11,
+          center: center,
+          mapTypeId: google.maps.MapTypeId.ROADMAP
+        });
+
+        var refresh = document.getElementById('refresh');
+        google.maps.event.addDomListener(refresh, 'click', refreshMap);
+
+        var clear = document.getElementById('clear');
+        google.maps.event.addDomListener(clear, 'click', clearClusters);        
+
+        refreshMap();
+
+
+    }
+    google.maps.event.addDomListener(window, 'load', initialize);
+    </script>
+  </head>
+  <body>
+    <h3>User locations test</h3>
+    <div id="inline-actions">
+      <span>User:
+        <select id="user">
+          <option value="daniel.migliorelli@olx.com">Daniel</option>
+          <option value="martin.panelati@olx.com">Tato</option>
+          <option value="nicolasc@olx.com">Nicolas</option>
+          <option value="olxmobilevideos@gmail.com">Melisa</option>
+          <option value="santiago.hollmann@gmail.com">Santi</option>
+          <option value="luacevedo90@gmail.com">Lu</option>
+        </select>
+      </span>
+      <span>Day:
+        <select id="day">
+          <option value="15">April 15</option>
+          <option value="16">April 16</option>
+          <option value="17">April 17</option>
+          <option value="18">April 18</option>
+          <option value="19">April 19</option>
+          <option value="20">April 20</option>
+       </select>
+      </span>
+      
+       <input id="refresh" type="button" value="Refresh Map" class="item"/>
+       <input href="#" id="clear" value="Clear" type="button"></input>
+       <input href="#" id="show-points" value="show" type="checkbox" checked="true" onchange="refreshPoints()">Show points</input>
+    </div>
+    <br></br>
+    <div></div>
+    <div id="map-container"><div id="map"></div></div>
+  </body>
+</html>
