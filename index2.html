@@ -44,11 +44,11 @@
     var markers = [];
     var points = [];
     var contentString = '<div style="max-width:300px">'+
-'<h2>#TITLE#</h2>'+
-'<h3>#PRICE#</h3>'+
-'<img src="#URL#" class="item-image" data-gallery-image="">'+
-'<div>#DESCRIPTION#</div>'+
-'</div>';
+    '<h2>#TITLE#</h2>'+
+    '<h3>#PRICE#</h3>'+
+    '<img src="#URL#" class="item-image" data-gallery-image="">'+
+    '<div>#DESCRIPTION#</div>'+
+    '</div>';
     var infowindow = new google.maps.InfoWindow({
       content: ""
     });
@@ -65,14 +65,13 @@
         refreshPoints();
 
         var user = document.getElementById('user').value;
-        var day = document.getElementById('day').value;
-
-        d3.json( "data/" + user + "." + day + ".items.json", function(data) {
+        
+        d3.json( "data/" + user + ".items.json", function(data) {
                 
             drawItems(map, data);
         });            
 
-        d3.json( "data/" + user + "." + day + ".clusters.json", function(data) {
+        d3.json( "data/" + user + ".clusters.json", function(data) {
             
             drawClusters(map, data);
         });        
@@ -82,13 +81,12 @@
     function refreshPoints() {
 
         var user = document.getElementById('user').value;
-        var day = document.getElementById('day').value;
         var isChecked = document.getElementById('show-points').checked;
         console.log(isChecked);
 
         if( isChecked  === true ) {
 
-            d3.json( "data/" + user + "." + day + ".json", function(data) {
+            d3.json( "data/" + user + ".json", function(data) {
                 
                 drawPositions(map, data);
             });
@@ -121,8 +119,8 @@
 
             google.maps.event.addListener(marker, 'click', function(res) {
 
-                console.log('title', this.title);
-
+                console.log('res', res);
+                console.log('marker', marker);
                 itemContent = contentString.replace("#TITLE#", this.title).replace("#DESCRIPTION#", this.description).replace("#URL#", this.image).replace("#PRICE#", this.price);
                 infowindow.setContent(itemContent);
                 infowindow.open(map, this);
@@ -238,25 +236,6 @@
           <option value="santiago.hollmann@gmail.com">Santi</option>
           <option value="luacevedo90@gmail.com">Lu</option>
         </select>
-      </span>
-      <span>Day:
-        <select id="day">
-          <option value="15">April 15</option>
-          <option value="16">April 16</option>
-          <option value="17">April 17</option>
-          <option value="18">April 18</option>
-          <option value="19">April 19</option>
-          <option value="20">April 20</option>
-          <option value="21">April 21</option>
-          <option value="22">April 22</option>
-          <option value="23">April 23</option>
-          <option value="24">April 24</option>
-          <option value="25">April 25</option>
-          <option value="26">April 26</option>
-          <option value="27">April 27</option>
-          <option value="28">April 28</option>
-          <option value="29">April 29</option>
-       </select>
       </span>
       
        <input id="refresh" type="button" value="Refresh Map" class="item"/>
