@@ -39,10 +39,10 @@
 
     <script>
 
-    var markerClusterer = null;
     var map = null;
-    var markers = [];
+    var clusters = [];
     var points = [];
+    var items = [];
     var contentString = '<div style="max-width:300px">'+
     '<h2>#TITLE#</h2>'+
     '<h3>#PRICE#</h3>'+
@@ -55,27 +55,13 @@
 
     function refreshMap() {
 
-        clearMarkers();
         clearPoints();
-       
-        if (markerClusterer) {
-            markerClusterer.clearMarkers();
-        }
+        clearClusters();
+        clearItems();
 
         refreshPoints();
-
-        var user = document.getElementById('user').value;
-        
-        d3.json( "data/" + user + ".items.json", function(data) {
-                
-            drawItems(map, data);
-        });            
-
-        d3.json( "data/" + user + ".clusters.json", function(data) {
-            
-            drawClusters(map, data);
-        });        
-
+        refreshClusters();
+        refreshItems();
     }
 
     function refreshPoints() {
@@ -96,6 +82,42 @@
         }
     }
 
+    function refreshClusters() {
+
+        var user = document.getElementById('user').value;
+        var isChecked = document.getElementById('show-clusters').checked;
+        console.log(isChecked);
+
+        if( isChecked  === true ) {
+
+            d3.json( "data/" + user + ".clusters.json", function(data) {
+                
+                drawClusters(map, data);
+            });
+
+        } else {
+            clearClusters();
+        }
+    }
+
+    function refreshItems() {
+
+        var user = document.getElementById('user').value;
+        var isChecked = document.getElementById('show-items').checked;
+        console.log(isChecked);
+
+        if( isChecked  === true ) {
+
+            d3.json( "data/" + user + ".items.json", function(data) {
+                    
+                drawItems(map, data);
+            });
+
+        } else {
+            clearItems();
+        }
+    }        
+
 
 
     function drawItems(map, data) {
@@ -105,6 +127,8 @@
             var dataPhoto = data[i];
             var latLng = new google.maps.LatLng(dataPhoto.latitude,
                   dataPhoto.longitude);
+
+
             var marker = new google.maps.Marker({
                     position: latLng,
                     map: map,
@@ -112,10 +136,12 @@
                     icon: "olx.png",
                     image: dataPhoto.image,
                     description: dataPhoto.description,
-                    price: dataPhoto.price
+                    price: dataPhoto.price,
+                    zIndex: 100
+
             });
 
-            markers.push(marker);
+            items.push(marker);
 
             google.maps.event.addListener(marker, 'click', function(res) {
 
@@ -140,10 +166,11 @@
             var marker = new google.maps.Marker({
                     position: latLng,
                     map: map,
-                    icon: 'cluster.png'
+                    icon: 'cluster_olx.png',
+                    zIndex: 50
 
             });
-            markers.push(marker);
+            clusters.push(marker);
         }
     }    
 
@@ -156,19 +183,20 @@
             var marker = new google.maps.Marker({
                     position: latLng,
                     map: map,
-                    icon: 'circle.png'
+                    icon: 'point.png',
+                    zIndex: 0
 
             });
             points.push(marker);
         }
     }    
 
-    function clearMarkers() {
-        for (var i = 0; i < markers.length; i++) {
-            markers[i].setMap(null);
+    function clearClusters() {
+        for (var i = 0; i < clusters.length; i++) {
+            clusters[i].setMap(null);
         }
 
-        markers = [];
+        clusters = [];
     }
 
     function clearPoints() {
@@ -177,45 +205,27 @@
         }
 
         points = [];
-    }    
-
-
-    function drawMap(map, data) {
-
-        var markers = [];
-        for (var i = 0; i < data.length; i++) {
-            var dataPhoto = data[i];
-            var latLng = new google.maps.LatLng(dataPhoto.lat,
-                  dataPhoto.lng);
-            var marker = new google.maps.Marker({
-                    position: latLng
-            });
-            markers.push(marker);
-        }
-        markerClusterer = new MarkerClusterer(map, markers);
-        console.log(markerClusterer.clusters_);
     }
 
-    function clearClusters(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        markerClusterer.clearMarkers();
-    }    
+    function clearItems() {
+        for (var i = 0; i < items.length; i++) {
+            items[i].setMap(null);
+        }
+
+        items = [];
+    } 
 
     function initialize() {
         var center = new google.maps.LatLng(-34.5853293,-58.4385033);
 
         map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 11,
+          zoom: 13,
           center: center,
           mapTypeId: google.maps.MapTypeId.ROADMAP
         });
 
-        var refresh = document.getElementById('refresh');
-        google.maps.event.addDomListener(refresh, 'click', refreshMap);
-
-        var clear = document.getElementById('clear');
-        google.maps.event.addDomListener(clear, 'click', clearClusters);        
+        var user = document.getElementById('user');
+        google.maps.event.addDomListener(user, 'onchange', refreshMap);
 
         refreshMap();
 
@@ -228,7 +238,7 @@
     <h3>User locations test</h3>
     <div id="inline-actions">
       <span>User:
-        <select id="user">
+        <select id="user" onchange="refreshMap()">
           <option value="daniel.migliorelli@olx.com">Daniel</option>
           <option value="martin.panelati@olx.com">Tato</option>
           <option value="nicolasc@olx.com">Nicolas</option>
@@ -238,9 +248,9 @@
         </select>
       </span>
       
-       <input id="refresh" type="button" value="Refresh Map" class="item"/>
-       <input href="#" id="clear" value="Clear" type="button"></input>
-       <input href="#" id="show-points" value="show" type="checkbox" checked="true" onchange="refreshPoints()">Show points</input>
+       <input href="#" id="show-points" value="show" type="checkbox" onchange="refreshPoints()">points</input>
+       <input href="#" id="show-clusters" value="show" type="checkbox" onchange="refreshClusters()">clusters</input>
+        <input href="#" id="show-items" value="show" type="checkbox" onchange="refreshItems()">items</input> 
     </div>
     <br></br>
     <div></div>
