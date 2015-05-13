@@ -166,7 +166,7 @@
             var marker = new google.maps.Marker({
                     position: latLng,
                     map: map,
-                    icon: 'cluster_olx.png',
+                    icon: 'cluster_green.png',
                     zIndex: 50
 
             });
@@ -183,7 +183,7 @@
             var marker = new google.maps.Marker({
                     position: latLng,
                     map: map,
-                    icon: 'point.png',
+                    icon: 'point_violet.png',
                     zIndex: 0
 
             });
@@ -235,7 +235,7 @@
     </script>
   </head>
   <body>
-    <h3>User locations test</h3>
+    <h3>User tracks test</h3>
     <div id="inline-actions">
       <span>User:
         <select id="user" onchange="refreshMap()">
@@ -248,8 +248,8 @@
         </select>
       </span>
       
-       <input href="#" id="show-points" value="show" type="checkbox" onchange="refreshPoints()">points</input>
-       <input href="#" id="show-clusters" value="show" type="checkbox" onchange="refreshClusters()">clusters</input>
+        <input href="#" id="show-points" value="show" type="checkbox" onchange="refreshPoints()">points</input>
+        <input href="#" id="show-clusters" value="show" type="checkbox" onchange="refreshClusters()">clusters</input>
         <input href="#" id="show-items" value="show" type="checkbox" onchange="refreshItems()">items</input> 
     </div>
     <br></br>

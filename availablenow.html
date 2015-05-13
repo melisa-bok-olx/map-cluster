@@ -42,6 +42,7 @@
     var map = null;
     var items = [];
     var circles = [];
+    var points = [];
     var contentString = '<div style="max-width:300px">'+
     '<h2>#TITLE#</h2>'+
     '<h3>#PRICE#</h3>'+
@@ -56,22 +57,85 @@
         position: new google.maps.LatLng()
     });
 
-    var inCircleColor = '#0000FF';
-    var outCircleColor = '#FF0000';
+    var inCircleColor = '#a9ba06';
+    var outCircleColor = '#652882';
 
 
     function refreshMap() {
 
+        clearPoints();
         clearItems();
 
-        var user = document.getElementById('user').value;
-        
-        d3.json( "data/" + user + ".own.items.json", function(data) {
-                
-            drawItems(map, data);
-        });            
+        refreshPoints();            
+        refreshItems();
+
+
 
     }
+
+
+    function refreshPoints() {
+
+        var user = document.getElementById('user').value;
+        var isChecked = document.getElementById('show-points').checked;
+        console.log(isChecked);
+
+        if( isChecked  === true ) {
+
+            d3.json( "data/" + user + ".json", function(data) {
+                
+                drawPositions(map, data);
+            });
+
+        } else {
+            clearPoints();
+        }
+    }
+
+    function drawPositions(map, data) {
+
+        for (var i = 0; i < data.length; i++) {
+            var dataPhoto = data[i];
+            var latLng = new google.maps.LatLng(dataPhoto.lat,
+                  dataPhoto.lng);
+            var marker = new google.maps.Marker({
+                    position: latLng,
+                    map: map,
+                    icon: 'point.png',
+                    fillOpacity: 0.35,
+                    zIndex: 0
+
+            });
+            points.push(marker);
+        }
+    }
+
+    function clearPoints() {
+        for (var i = 0; i < points.length; i++) {
+            points[i].setMap(null);
+        }
+
+        points = [];
+    }
+
+    function refreshItems() {
+
+        var user = document.getElementById('user').value;
+        var isChecked = document.getElementById('show-items').checked;
+        console.log(isChecked);
+
+        if( isChecked  === true ) {
+
+            d3.json( "data/" + user + ".own.items.json", function(data) {
+                    
+                console.log('data', user);
+                drawItems(map, data);
+            });
+
+        } else {
+            clearItems();
+        }
+    }        
 
 
     function drawItems(map, data) {
@@ -88,7 +152,8 @@
                     icon: "olx.png",
                     image: item.image,
                     description: item.description,
-                    price: item.price
+                    price: item.price,
+                    zIndex: 100
             });
 
             items.push(marker);
@@ -112,23 +177,37 @@
               fillOpacity: 0.35,
               map: map,
               center: latLng,
-              radius: 200
+              radius: 200,
+              zIndex: 150
             };
 
             // Add the circle for this city to the map.
             itemCircle = new google.maps.Circle(circleOptions);
             circles.push(itemCircle);
 
+            //Display item listing
+            document.getElementById('item-listing-1').hidden = false;
+            document.getElementById('item-listing-2').hidden = false;
+
         }
 
     }
 
     function clearItems() {
+        for (var i = 0; i < circles.length; i++) {
+            circles[i].setMap(null);
+        }
+
+        circles = [];
+
         for (var i = 0; i < items.length; i++) {
             items[i].setMap(null);
         }
 
         items = [];
+
+        document.getElementById('item-listing-1').hidden = true;
+        document.getElementById('item-listing-2').hidden = true;
     }
 
 
@@ -146,13 +225,28 @@
                 circle.setOptions({ fillColor: inCircleColor,
                     strokeColor: inCircleColor
                 });
+                setAvailable(i, true);
+
             } else {
                 circle.setOptions({ fillColor: outCircleColor,
                     strokeColor: outCircleColor
                 });
+                setAvailable(i, false);
             }
 
         }
+    }
+
+    function setAvailable(index, isAvailable) {
+
+        var elementId = (index + 1)
+        console.log(elementId);
+        if (isAvailable) {
+            document.getElementById("item-listing-" + elementId).src = "item" + elementId + "_available.png";
+        } else {
+            document.getElementById("item-listing-" + elementId).src = "item" + elementId + "_notavailable.png";
+        }
+        
     }
 
 
@@ -166,10 +260,11 @@
             userMarker.setMap(null);
             userMarker = new google.maps.Marker({
                 position: latLng,
-                map: map
+                map: map,
+                icon: 'martin.panelati@olx.com.png'
             });
 
-            map.setZoom(16);
+            //map.setZoom(16);
             map.panTo(userMarker.position);
 
             checkPointInCircles(latLng);
@@ -197,17 +292,13 @@
 
 
     function initialize() {
-        var center = new google.maps.LatLng(-34.5853293,-58.4385033);
+        var center = new google.maps.LatLng(-34.5502061,-58.4504116);
 
         map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 11,
+          zoom: 15,
           center: center,
           mapTypeId: google.maps.MapTypeId.ROADMAP
         });
-
-        var refresh = document.getElementById('refresh');
-        google.maps.event.addDomListener(refresh, 'click', refreshMap);
-       
 
         refreshMap();
         start();
@@ -218,26 +309,41 @@
     </script>
   </head>
   <body>
-    <h3>User locations test</h3>
+    <h3>Available now! test</h3>
     <div id="inline-actions">
       <span>User:
-        <select id="user">
-          <option value="melisa.bok@olx.com">Melisa</option>
-          <option value="daniel.migliorelli@olx.com">Daniel</option>
+        <select id="user" onchange="refreshMap()">
+          <option value="melisa.bok@olx.com">Tato</option>
+          <!--<option value="daniel.migliorelli@olx.com">Daniel</option>
           <option value="martin.panelati@olx.com">Tato</option>
           <option value="nicolasc@olx.com">Nicolas</option>
           <option value="olxmobilevideos@gmail.com">Melisa</option>
           <option value="santiago.hollmann@gmail.com">Santi</option>
-          <option value="luacevedo90@gmail.com">Lu</option>
+          <option value="luacevedo90@gmail.com">Lu</option>-->
         </select>
       </span>
       
-       <input id="refresh" type="button" value="Refresh Map" class="item"/>
-       <input href="#" id="clear" value="Clear" type="button"></input>
-       <input href="#" id="show-points" value="show" type="checkbox" checked="true" onchange="refreshPoints()">Show points</input>
+        <input href="#" id="show-points" value="show" type="checkbox" onchange="refreshPoints()" hidden="true"></input>
+        <input href="#" id="show-items" value="show" type="checkbox" onchange="refreshItems()">items</input> 
     </div>
     <br></br>
     <div></div>
-    <div id="map-container"><div id="map"></div></div>
+    <table>
+        <tr>
+            <td>
+                <div id="map-container">
+                    <div id="map"></div>
+                </div>
+            </td>
+            <td>
+                <div id="item-listing">
+                    <img id="item-listing-1" src="item1_notavailable.png" hidden="true"\>
+                    <img id="item-listing-2" src="item2_notavailable.png" hidden="true"\>
+                </div>
+            </td>
+        <tr>
+    </table>
+    
+    
   </body>
 </html>
